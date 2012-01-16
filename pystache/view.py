@@ -1,5 +1,4 @@
 from pystache import Template
-import os.path
 import re
 from types import *
 
@@ -73,6 +72,9 @@ class View(object):
 
     def render(self, encoding=None):
         return Template(self.get_template(self.template_name), self).render(encoding=encoding)
+
+    def renderOnlyLocalization(self):
+        return Template(self.get_template(self.template_name), self).renderOnlyLocalization()
 
     def __contains__(self, needle):
         return needle in self.context or hasattr(self, needle)

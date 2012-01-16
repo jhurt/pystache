@@ -1,8 +1,7 @@
 import re
 import cgi
 import collections
-import os
-import copy
+from django.utils.translation import ugettext as _
 
 try:
     import markupsafe
@@ -65,7 +64,7 @@ class Template(object):
         section = r"%(otag)s[\#|^]([^\}]*)%(ctag)s\s*(.+?\s*)%(otag)s/\1%(ctag)s"
         self.section_re = re.compile(section % tags, re.M|re.S)
 
-        tag = r"%(otag)s(#|=|&|!|>|\{)?(.+?)\1?%(ctag)s+"
+        tag = r"%(otag)s(#|=|&|@|!|>|\{)?(.+?)\1?%(ctag)s+"
         self.tag_re = re.compile(tag % tags)
 
     def _render_sections(self, template, view):
@@ -161,6 +160,10 @@ class Template(object):
         self._compile_regexps()
         return ''
 
+    @modifiers.set('@')
+    def _translate(self, tag_name):
+        return _(tag_name)
+
     @modifiers.set('{')
     @modifiers.set('&')
     def render_unescaped(self, tag_name):
@@ -174,4 +177,19 @@ class Template(object):
         if encoding is not None:
             result = result.encode(encoding)
 
+        return result
+
+    def _compile_regexps_localization(self):
+        tags = {
+            'otag': re.escape(self.otag),
+            'ctag': re.escape(self.ctag)
+        }
+
+        tag = r"%(otag)s(@)(.+?)\1?%(ctag)s+"
+        self.tag_re = re.compile(tag % tags)
+
+
+    def renderOnlyLocalization(self):
+        self._compile_regexps_localization()
+        result = self._render_tags(self.template)
         return result
